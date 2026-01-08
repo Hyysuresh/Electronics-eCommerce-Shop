@@ -13,7 +13,8 @@ export const apiClient = {
       },
     };
     
-    return fetch(url, { ...defaultOptions, ...options });
+    // Force fresh data on server-side by disabling fetch cache
+    return fetch(url, { ...defaultOptions, ...options, cache: (options as any)?.cache || 'no-store' });
   },
   
   // Convenience methods

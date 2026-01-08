@@ -18,35 +18,42 @@ const Products = async ({ params, searchParams }: { params: { slug?: string[] },
   const outOfStockNum = searchParams?.outOfStock === "true" ? 1 : 0;
   const page = searchParams?.page ? Number(searchParams?.page) : 1;
 
-  let stockMode: string = "lte";
-  
-  // preparing inStock and out of stock filter for GET request
-  // If in stock checkbox is checked, stockMode is "equals"
-  if (inStockNum === 1) {
-    stockMode = "equals";
+  // Default: show all products when no availability filters are set
+  let stockMode: string = "gte";
+
+  // prepare stock mode based on checkboxes
+  // If only "in stock" is selected -> show inStock >= 1
+  if (inStockNum === 1 && outOfStockNum === 0) {
+    stockMode = "gte";
   }
- // If out of stock checkbox is checked, stockMode is "lt"
-  if (outOfStockNum === 1) {
+
+  // If only "out of stock" is selected -> show inStock < 1
+  if (outOfStockNum === 1 && inStockNum === 0) {
     stockMode = "lt";
   }
-   // If in stock and out of stock checkboxes are checked, stockMode is "lte"
+
+  // If both are selected -> show inStock <= 1 (both 0 and 1)
   if (inStockNum === 1 && outOfStockNum === 1) {
     stockMode = "lte";
   }
-   // If in stock and out of stock checkboxes aren't checked, stockMode is "gt"
-  if (inStockNum === 0 && outOfStockNum === 0) {
-    stockMode = "gt";
-  }
+
+  // Determine comparison value: when no filters selected use 0 to include all
+  const stockValue = inStockNum === 0 && outOfStockNum === 0 ? 0 : 1;
 
   let products = [];
 
   try {
+    // debug logs for SSR
+    // eslint-disable-next-line no-console
+    console.log('Products SSR: NEXT_PUBLIC_API_BASE_URL=', process.env.NEXT_PUBLIC_API_BASE_URL);
+    // eslint-disable-next-line no-console
+    console.log('Products SSR: fetching products with query params', { stockMode, page, searchParams, params });
     // sending API request with filtering, sorting and pagination for getting all products
     const data = await apiClient.get(`/api/products?filters[price][$lte]=${
         searchParams?.price || 3000
       }&filters[rating][$gte]=${
         Number(searchParams?.rating) || 0
-      }&filters[inStock][$${stockMode}]=1&${
+      }&filters[inStock][$${stockMode}]=${stockValue}&${
         params?.slug?.length! > 0
           ? `filters[category][$equals]=${params?.slug}&`
           : ""

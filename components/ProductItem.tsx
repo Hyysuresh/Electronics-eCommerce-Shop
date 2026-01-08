@@ -24,7 +24,7 @@ const ProductItem = ({
   return (
     <div className="flex flex-col items-center gap-y-2">
       <Link href={`/product/${product.slug}`}>
-        <Image
+        {/* <Image
           src={
             product.mainImage
               ? `/${product.mainImage}`
@@ -33,6 +33,12 @@ const ProductItem = ({
           width="0"
           height="0"
           sizes="100vw"
+          className="w-auto h-[300px]"
+          alt={sanitize(product?.title) || "Product image"} */}
+        <Image
+          src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
+          width={300}
+          height={300}
           className="w-auto h-[300px]"
           alt={sanitize(product?.title) || "Product image"}
         />

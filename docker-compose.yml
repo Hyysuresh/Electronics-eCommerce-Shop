@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:latest
+    container_name: "mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: pass123
+      MYSQL_DATABASE: mysqldb
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: pass123
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppass123"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ecomapp
+    restart: always
+
+  backend:
+    build:
+      context: ./server/
+    container_name: "ecom-backend"
+    ports:
+      - "3001:3001"
+    networks:
+      - ecomapp
+    env_file:
+      - ./server/.env
+    depends_on:
+      - mysql
+  frontend:
+    build:
+      context: .
+    container_name: "ecom-frontend"
+    ports:
+      - "3000:3000"
+    networks:
+      - ecomapp
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://ecom-backend:3001
+    depends_on:
+      - backend
+volumes:
+  mysql_data:
+networks:
+  ecomapp:
