@@ -53,7 +53,8 @@ const LoginPage = () => {
     if (res?.error) {
       setError("Invalid email or password");
       toast.error("Invalid email or password");
-      if (res?.url) router.replace("/");
+      // Do not redirect on authentication error — keep user on the login page so
+      // they can see the error message and try again.
     } else {
       setError("");
       toast.success("Successful login");

@@ -49,8 +49,13 @@ const AddNewProduct = () => {
 
       console.log("Sending product data:", sanitizedProduct);
 
-      // Correct usage of apiClient.post
-      const response = await apiClient.post(`/api/products`, sanitizedProduct);
+      // Proxy the request to an admin-only Next.js route which requires an admin session
+      const response = await fetch(`/api/admin/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sanitizedProduct),
+        credentials: "include",
+      });
 
       if (response.status === 201) {
         const data = await response.json();
@@ -67,10 +72,12 @@ const AddNewProduct = () => {
           slug: "",
           categoryId: categories[0]?.id || "",
         });
+      } else if (response.status === 401) {
+        toast.error("Unauthorized: You must be an admin to add products.");
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         console.error("Failed to create product:", errorData);
-        toast.error(`"Error:" ${errorData.message || "Failed to add product"}`);
+        toast.error(`Error: ${errorData.message || "Failed to add product"}`);
       }
     } catch (error) {
       console.error("Error adding product:", error);
@@ -97,18 +104,21 @@ const AddNewProduct = () => {
     formData.append("uploadedFile", file);
 
     try {
-      const response = await apiClient.post("/api/main-image", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await apiClient.post("/api/main-image", formData);
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
+        toast.success("File uploaded successfully");
+        // Update form mainImage with uploaded filename
+        setProduct((prev) => ({ ...prev, mainImage: file.name }));
       } else {
-        console.error("File upload unsuccessfull");
+        const errText = await response.text().catch(() => "");
+        console.error("File upload unsuccessful", errText);
+        toast.error("File upload unsuccessful");
       }
     } catch (error) {
-      console.error("Error happend while sending request:", error);
+      console.error("Error happened while sending request:", error);
+      toast.error("Upload failed. Try again.");
     }
   };
 
