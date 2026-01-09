@@ -33,7 +33,7 @@ services:
     env_file:
       - ./server/.env
     depends_on:
-      - mysql
+      - mysql_db
   frontend:
     build:
       context: .
